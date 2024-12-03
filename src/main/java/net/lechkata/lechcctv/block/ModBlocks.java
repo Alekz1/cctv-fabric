@@ -17,7 +17,7 @@ public class ModBlocks {
     public static final Block CAMERA_BLOCK = registerBlock("camera_block",
             new Block(AbstractBlock.Settings.create().strength(2f).sounds(BlockSoundGroup.METAL)));
     public static final Block MONITOR_BLOCK = registerBlock("monitor_block",
-            new Block(AbstractBlock.Settings.create().strength(2f).sounds(BlockSoundGroup.METAL)));
+            new MonitorBlock(AbstractBlock.Settings.create().strength(2f).sounds(BlockSoundGroup.METAL)));
 
     private static Block registerBlock(String name, Block block){
         registerBlockItem(name, block);
