@@ -1,0 +1,8 @@
+{
+  "item.lechcctv.screen": "Screen",
+  "item.lechcctv.lens": "Lens",
+  "item.lechcctv.link_tool": "Link Tool",
+
+  "block.lechcctv.camera_block": "Camera Block",
+  "itemgroup.lechcctv.cctv_items": "CCTV"
+}
