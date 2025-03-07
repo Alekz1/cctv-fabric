@@ -10,26 +10,32 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import qouteall.imm_ptl.core.portal.Portal;
 
 import java.util.List;
 
 public class MonitorBlockEntity extends BlockEntity implements TickableBlockEntity {
-    private BlockPos linkedCamera; // Stores the linked camera position
+    private BlockPos linkedCamera;
+    private Direction linkedCameraDirection;// Stores the linked camera position
 
     public MonitorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MONITOR_BLOCK_ENTITY, pos, state);
     }
 
-    public void setLinkedCamera(BlockPos cameraPos) {
+    public void setLinkedCamera(BlockPos cameraPos, Direction cameraDir) {
         this.linkedCamera = cameraPos;
+        this.linkedCameraDirection = cameraDir;
         markDirty(); // Ensures the data is saved
-
     }
 
     public BlockPos getLinkedCamera() {
         return this.linkedCamera;
+    }
+
+    public Direction getLinkedCameraDir() {
+        return this.linkedCameraDirection;
     }
 
     public void closePortal(BlockPos monitorPos) {

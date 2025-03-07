@@ -26,6 +26,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import qouteall.imm_ptl.core.portal.Portal;
+import qouteall.imm_ptl.core.portal.PortalManipulation;
 
 import java.util.List;
 
@@ -72,7 +73,7 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
             BlockEntity entity = world.getBlockEntity(pos);
             if (entity instanceof MonitorBlockEntity monitorEntity) {
 
-                monitorEntity.setLinkedCamera(null); // No linked camera at start
+                monitorEntity.setLinkedCamera(null, null); // No linked camera at start
             }
         }
     }
@@ -83,17 +84,17 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
 
             if(!world.isClient && stack.get(ModDataComponentTypes.COORDINATES) != null){
                 camerapos = stack.get(ModDataComponentTypes.COORDINATES);
+                // Determine orientation based on the clicked face
+                cameraface = stack.get(ModDataComponentTypes.DIRECTION); // Get the camera face clicked
                 BlockEntity entity = world.getBlockEntity(pos);
                 if (entity instanceof MonitorBlockEntity monitorEntity) {
-                    monitorEntity.setLinkedCamera(camerapos); // No linked camera at start
+                    monitorEntity.setLinkedCamera(camerapos, cameraface); // No linked camera at start
                     monitorEntity.markDirty();
                     world.updateListeners(pos, state, state, Block.NOTIFY_ALL); // Ensures block updates
                     player.sendMessage(Text.literal("Camerapos saved monitorEntity!"+camerapos));
                 }
                 player.sendMessage(Text.literal("Camerapos: "+ Vec3d.of(camerapos)));
                 player.sendMessage(Text.literal("Monitorpos: "+ Vec3d.of(pos)));
-                // Determine orientation based on the clicked face
-                cameraface = stack.get(ModDataComponentTypes.DIRECTION); // Get the camera face clicked
                 return ItemActionResult.SUCCESS;
             }
         } else if (stack.getItem() == Items.AIR) {
@@ -109,7 +110,7 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
 
             }
 
-            if(camerapos!=null){
+            if(camerapos!=null && cameraface!=null){
                 Portal portal = new Portal(Portal.ENTITY_TYPE, world);
                 portal.setDestDim(world.getRegistryKey());
                 portal.setPortalSize(1,1,1);
@@ -128,6 +129,20 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
                 }
                 Vec3d offset = Vec3d.ofCenter(pos).add(Vec3d.of(face.getVector()).multiply(0.501)); // Offset from block center
                 portal.setOriginPos(offset);
+                switch (cameraface) {
+                    case NORTH -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
+                            new Vec3d(-1, 0, 0), new Vec3d(0, 1, 0))); // Camera facing north
+                    case SOUTH -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
+                            new Vec3d(1, 0, 0), new Vec3d(0, 1, 0))); // Camera facing south
+                    case EAST -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
+                            new Vec3d(0, 0, -1), new Vec3d(0, 1, 0))); // Camera facing east
+                    case WEST -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
+                            new Vec3d(0, 0, 1), new Vec3d(0, 1, 0))); // Camera facing west
+                    case UP -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
+                            new Vec3d(1, 0, 0), new Vec3d(0, 0, -1))); // Camera facing up
+                    case DOWN -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
+                            new Vec3d(1, 0, 0), new Vec3d(0, 0, 1))); // Camera facing down
+                }
                 if(portal.isPortalValid()){
                     portal.getWorld().spawnEntity(portal);
                 }else {
@@ -166,6 +181,7 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
     @Override
     protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
         Portal portal = findPortalNearby(world, pos);
+        BlockEntity entity = world.getBlockEntity(pos);
         if(portal!=null){
             portal.remove(Entity.RemovalReason.KILLED);
         }
