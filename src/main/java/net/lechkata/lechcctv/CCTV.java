@@ -3,6 +3,7 @@ package net.lechkata.lechcctv;
 import net.fabricmc.api.ModInitializer;
 
 import net.lechkata.lechcctv.block.ModBlocks;
+import net.lechkata.lechcctv.blockentity.ModBlockEntities;
 import net.lechkata.lechcctv.component.ModDataComponentTypes;
 import net.lechkata.lechcctv.item.ModItemGroups;
 import net.lechkata.lechcctv.item.ModItems;
@@ -20,5 +21,6 @@ public class CCTV implements ModInitializer {
 		ModBlocks.registerModBlocks();
 		ModItemGroups.registerItemGroups();
 		ModDataComponentTypes.registerDataComponentTypes();
+		ModBlockEntities.registerBlockEntities();
 	}
 }

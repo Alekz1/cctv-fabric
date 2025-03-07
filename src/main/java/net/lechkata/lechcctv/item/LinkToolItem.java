@@ -28,6 +28,7 @@ public class LinkToolItem extends Item {
         if (!world.isClient()) {
             if (block == ModBlocks.CAMERA_BLOCK) {
                 context.getStack().set(ModDataComponentTypes.COORDINATES, context.getBlockPos());
+                context.getStack().set(ModDataComponentTypes.DIRECTION, context.getSide());
                 context.getPlayer().sendMessage(msg);
             }
         }

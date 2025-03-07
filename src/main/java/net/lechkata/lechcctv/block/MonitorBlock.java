@@ -1,12 +1,20 @@
 package net.lechkata.lechcctv.block;
 
+import com.mojang.serialization.MapCodec;
+import net.lechkata.lechcctv.blockentity.ModBlockEntities;
+import net.lechkata.lechcctv.blockentity.MonitorBlockEntity;
 import net.lechkata.lechcctv.component.ModDataComponentTypes;
 import net.lechkata.lechcctv.item.ModItems;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
+import net.lechkata.lechcctv.util.TickableBlockEntity;
+import net.minecraft.block.*;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityTicker;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ItemActionResult;
@@ -16,38 +24,100 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import org.jetbrains.annotations.Nullable;
 import qouteall.imm_ptl.core.portal.Portal;
 
 import java.util.List;
 
-public class MonitorBlock extends Block {
+
+public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider {
 
     public MonitorBlock(Settings settings) {
         super(settings);
     }
+    public static final MapCodec<MonitorBlock> CODEC = MonitorBlock.createCodec(MonitorBlock::new);
 
-    private BlockPos camerapos;
+    @Override
+    protected MapCodec<? extends BlockWithEntity> getCodec() {
+        return CODEC;
+    }
+
+
+    public BlockPos camerapos;
+    private Direction cameraface;
     private World pworld;
 
 
+    @Override
+    public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+        return new MonitorBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
+        return TickableBlockEntity.getTicker(world);
+    }
+
+    @Override
+    protected BlockRenderType getRenderType(BlockState state) {
+        return BlockRenderType.MODEL;
+    }
+
+    @Override
+    public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
+        super.onPlaced(world, pos, state, placer, itemStack);
+
+        if (!world.isClient) {
+            BlockEntity entity = world.getBlockEntity(pos);
+            if (entity instanceof MonitorBlockEntity monitorEntity) {
+
+                monitorEntity.setLinkedCamera(null); // No linked camera at start
+            }
+        }
+    }
 
     @Override
     protected ItemActionResult onUseWithItem(ItemStack stack, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
         if(stack.getItem() == ModItems.LINK_TOOL){
+
             if(!world.isClient && stack.get(ModDataComponentTypes.COORDINATES) != null){
                 camerapos = stack.get(ModDataComponentTypes.COORDINATES);
+                BlockEntity entity = world.getBlockEntity(pos);
+                if (entity instanceof MonitorBlockEntity monitorEntity) {
+                    monitorEntity.setLinkedCamera(camerapos); // No linked camera at start
+                    monitorEntity.markDirty();
+                    world.updateListeners(pos, state, state, Block.NOTIFY_ALL); // Ensures block updates
+                    player.sendMessage(Text.literal("Camerapos saved monitorEntity!"+camerapos));
+                }
                 player.sendMessage(Text.literal("Camerapos: "+ Vec3d.of(camerapos)));
-                player.sendMessage(Text.literal("Camerapos: "+ Vec3d.of(pos)));
+                player.sendMessage(Text.literal("Monitorpos: "+ Vec3d.of(pos)));
+                // Determine orientation based on the clicked face
+                cameraface = stack.get(ModDataComponentTypes.DIRECTION); // Get the camera face clicked
+                return ItemActionResult.SUCCESS;
+            }
+        } else if (stack.getItem() == Items.AIR) {
+            BlockEntity entity = world.getBlockEntity(pos);
+            if  (entity instanceof MonitorBlockEntity monitorEntity) {
+                camerapos = monitorEntity.getLinkedCamera();
+                player.sendMessage(Text.literal("Test!"));
+                Text msg = null;
+                if (camerapos != null) {
+                    msg = Text.literal("CameraPos: X:" + camerapos.getX() + " Y:" + camerapos.getY() + "Z:" + camerapos.getZ());
+                    player.sendMessage(msg); // No linked camera at start
+                }
 
-            }if(camerapos!=null){
+            }
+
+            if(camerapos!=null){
                 Portal portal = new Portal(Portal.ENTITY_TYPE, world);
                 portal.setDestDim(world.getRegistryKey());
                 portal.setPortalSize(1,1,1);
                 portal.setOriginPos(Vec3d.ofCenter(pos));
                 portal.setDestination(Vec3d.ofCenter(camerapos));
-                // Determine orientation based on the clicked face
-                Direction face = hit.getSide(); // Get the face clicked
+                portal.setInteractable(false);
+                portal.setTeleportable(false);
+                Direction face = hit.getSide();
                 switch (face) {
                     case NORTH -> portal.setOrientation(new Vec3d(-1, 0, 0), new Vec3d(0, 1, 0)); // Facing north (Z-negative)
                     case SOUTH -> portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 1, 0)); // Facing south (Z-positive)
@@ -63,15 +133,16 @@ public class MonitorBlock extends Block {
                 }else {
                     player.sendMessage(Text.literal("Invalid Portal!"));
                 }
+                return ItemActionResult.SUCCESS;
             }
         }
-
-
-        return ItemActionResult.SUCCESS;
+        return ItemActionResult.FAIL;
     }
+
+
     private Portal findPortalNearby(World world, BlockPos monitorPos) {
-        // Define the area to search (e.g., 10 blocks in each direction)
-        double scanRadius = 1.1;
+        // Define the area to search
+        double scanRadius = 1.5;
         Box scanArea = new Box(
                 monitorPos.getX() - scanRadius, monitorPos.getY() - scanRadius, monitorPos.getZ() - scanRadius,
                 monitorPos.getX() + scanRadius, monitorPos.getY() + scanRadius, monitorPos.getZ() + scanRadius

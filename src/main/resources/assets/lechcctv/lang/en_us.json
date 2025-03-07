@@ -4,5 +4,6 @@
   "item.lechcctv.link_tool": "Link Tool",
 
   "block.lechcctv.camera_block": "Camera Block",
+  "block.lechcctv.monitor_block": "Monitor Block",
   "itemgroup.lechcctv.cctv_items": "CCTV"
 }

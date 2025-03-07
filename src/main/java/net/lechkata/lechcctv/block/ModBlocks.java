@@ -15,7 +15,7 @@ import net.minecraft.util.Identifier;
 public class ModBlocks {
 
     public static final Block CAMERA_BLOCK = registerBlock("camera_block",
-            new Block(AbstractBlock.Settings.create().strength(2f).sounds(BlockSoundGroup.METAL)));
+            new CameraBlock(AbstractBlock.Settings.create().strength(2f).sounds(BlockSoundGroup.METAL)));
     public static final Block MONITOR_BLOCK = registerBlock("monitor_block",
             new MonitorBlock(AbstractBlock.Settings.create().strength(2f).sounds(BlockSoundGroup.METAL)));
 
