@@ -180,10 +180,9 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
 
     @Override
     protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
-        Portal portal = findPortalNearby(world, pos);
         BlockEntity entity = world.getBlockEntity(pos);
-        if(portal!=null){
-            portal.remove(Entity.RemovalReason.KILLED);
+        if (entity instanceof MonitorBlockEntity monitorEntity) {
+           monitorEntity.closePortal(pos);
         }
         super.onStateReplaced(state, world, pos, newState, moved);
     }
