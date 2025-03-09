@@ -1,7 +1,6 @@
 package net.lechkata.lechcctv.block;
 
 import com.mojang.serialization.MapCodec;
-import net.lechkata.lechcctv.blockentity.ModBlockEntities;
 import net.lechkata.lechcctv.blockentity.MonitorBlockEntity;
 import net.lechkata.lechcctv.component.ModDataComponentTypes;
 import net.lechkata.lechcctv.item.ModItems;
@@ -10,17 +9,17 @@ import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.state.StateManager;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ItemActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -28,95 +27,103 @@ import org.jetbrains.annotations.Nullable;
 import qouteall.imm_ptl.core.portal.Portal;
 import qouteall.imm_ptl.core.portal.PortalManipulation;
 
-import java.util.List;
+public class Monitor extends HorizontalFacingBlock implements BlockEntityProvider {
+    public static final MapCodec<Monitor> CODEC = createCodec(Monitor::new);
+    public BlockPos camerapos;
+    public Direction cameraface;
 
-
-public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider {
-
-    public MonitorBlock(Settings settings) {
+    protected Monitor(Settings settings) {
         super(settings);
     }
-    public static final MapCodec<MonitorBlock> CODEC = MonitorBlock.createCodec(MonitorBlock::new);
 
     @Override
-    protected MapCodec<? extends BlockWithEntity> getCodec() {
+    protected MapCodec<? extends HorizontalFacingBlock> getCodec() {
         return CODEC;
     }
 
+    @Nullable
+    @Override
+    public  BlockState getPlacementState(ItemPlacementContext ctx) {
+        return this.getDefaultState().with(FACING, ctx.getHorizontalPlayerFacing().getOpposite());
+    }
 
-    public BlockPos camerapos;
-    private Direction cameraface;
-
+    @Override
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
+    }
 
     @Override
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
         return new MonitorBlockEntity(pos, state);
     }
 
-    @Nullable
-    @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
         return TickableBlockEntity.getTicker(world);
     }
 
     @Override
-    protected BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
-    }
-
-    @Override
-    public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
+    public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
         super.onPlaced(world, pos, state, placer, itemStack);
-
         if (!world.isClient) {
             BlockEntity entity = world.getBlockEntity(pos);
             if (entity instanceof MonitorBlockEntity monitorEntity) {
-
-                monitorEntity.setLinkedCamera(null, null); // No linked camera at start
+                this.camerapos = null;
+                this.cameraface = null;
+                monitorEntity.setLinkedCamera(null, null);
             }
         }
     }
 
     @Override
-    protected ItemActionResult onUseWithItem(ItemStack stack, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if(stack.getItem() == ModItems.LINK_TOOL){
+    protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+        BlockEntity entity = world.getBlockEntity(pos);
+        if (entity instanceof MonitorBlockEntity monitorEntity) {
+            monitorEntity.closePortal(pos);
+        }
+        super.onStateReplaced(state, world, pos, newState, moved);
+    }
 
+    @Override
+    protected ItemActionResult onUseWithItem(ItemStack stack, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+        if(stack.getItem() == ModItems.LINK_TOOL) {
             if(!world.isClient && stack.get(ModDataComponentTypes.COORDINATES) != null){
                 camerapos = stack.get(ModDataComponentTypes.COORDINATES);
-                // Determine orientation based on the clicked face
                 cameraface = stack.get(ModDataComponentTypes.DIRECTION); // Get the camera face clicked
                 BlockEntity entity = world.getBlockEntity(pos);
                 if (entity instanceof MonitorBlockEntity monitorEntity) {
-                    monitorEntity.setLinkedCamera(camerapos, cameraface); // No linked camera at start
+                    monitorEntity.setLinkedCamera(camerapos, cameraface);
                     monitorEntity.markDirty();
                     world.updateListeners(pos, state, state, Block.NOTIFY_ALL); // Ensures block updates
-                    player.sendMessage(Text.literal("Camerapos saved monitorEntity!"+camerapos));
+                    player.sendMessage(Text.literal("Camerapos saved monitorEntity!"+camerapos+"Direction: "+cameraface));
                 }
                 player.sendMessage(Text.literal("Camerapos: "+ Vec3d.of(camerapos)));
                 player.sendMessage(Text.literal("Monitorpos: "+ Vec3d.of(pos)));
                 return ItemActionResult.SUCCESS;
             }
-        } else if (stack.getItem() == Items.AIR) {
+            return ItemActionResult.FAIL;
+        }
+        if(stack.getItem()== Items.AIR){
             BlockEntity entity = world.getBlockEntity(pos);
             if  (entity instanceof MonitorBlockEntity monitorEntity) {
                 camerapos = monitorEntity.getLinkedCamera();
+                cameraface = monitorEntity.getLinkedCameraDir();
                 Text msg = null;
                 if (camerapos != null) {
-                    msg = Text.literal("CameraPos: X:" + camerapos.getX() + " Y:" + camerapos.getY() + "Z:" + camerapos.getZ());
+                    msg = Text.literal("CameraPos: X:" + camerapos.getX() + " Y:" + camerapos.getY() + "Z:" + camerapos.getZ()+"Direction: "+cameraface);
                     player.sendMessage(msg); // No linked camera at start
                 }
 
             }
 
             if(camerapos!=null && cameraface!=null){
-                Portal portal = new Portal(Portal.ENTITY_TYPE, world);
+                qouteall.imm_ptl.core.portal.Portal portal = new qouteall.imm_ptl.core.portal.Portal(Portal.ENTITY_TYPE, world);
                 portal.setDestDim(world.getRegistryKey());
-                portal.setPortalSize(1,1,1);
+                portal.setPortalSize(0.5,0.5,1);
                 portal.setOriginPos(Vec3d.ofCenter(pos));
                 portal.setDestination(Vec3d.ofCenter(camerapos));
                 portal.setInteractable(false);
                 portal.setTeleportable(false);
-                Direction face = hit.getSide();
+                Direction face = state.get(FACING);
                 switch (face) {
                     case NORTH -> portal.setOrientation(new Vec3d(-1, 0, 0), new Vec3d(0, 1, 0)); // Facing north (Z-negative)
                     case SOUTH -> portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 1, 0)); // Facing south (Z-positive)
@@ -145,20 +152,12 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
                     portal.getWorld().spawnEntity(portal);
                 }else {
                     player.sendMessage(Text.literal("Invalid Portal!"));
+                    return ItemActionResult.FAIL;
                 }
                 return ItemActionResult.SUCCESS;
             }
+            return ItemActionResult.FAIL;
         }
         return ItemActionResult.FAIL;
-    }
-
-
-    @Override
-    protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
-        BlockEntity entity = world.getBlockEntity(pos);
-        if (entity instanceof MonitorBlockEntity monitorEntity) {
-           monitorEntity.closePortal(pos);
-        }
-        super.onStateReplaced(state, world, pos, newState, moved);
     }
 }

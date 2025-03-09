@@ -1,8 +1,10 @@
 package net.lechkata.lechcctv.blockentity;
 
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityType;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.lechkata.lechcctv.CCTV;
 import net.lechkata.lechcctv.block.ModBlocks;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -13,7 +15,7 @@ public class ModBlockEntities {
             Registry.register(
                     Registries.BLOCK_ENTITY_TYPE,
                     Identifier.of(CCTV.MOD_ID, "monitor_block_entity"),
-                    FabricBlockEntityTypeBuilder.create(MonitorBlockEntity::new, ModBlocks.MONITOR_BLOCK).build()
+                    FabricBlockEntityTypeBuilder.create(MonitorBlockEntity::new, ModBlocks.MONITOR_BLOCK, ModBlocks.MONITOR).build()
             );
 
     public static void registerBlockEntities() {

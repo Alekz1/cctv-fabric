@@ -40,6 +40,7 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
 
     public void closePortal(BlockPos monitorPos) {
         // Define the area to search
+        this.linkedCamera = null;
         double scanRadius = 1.5;
         Box scanArea = new Box(
                 monitorPos.getX() - scanRadius, monitorPos.getY() - scanRadius, monitorPos.getZ() - scanRadius,
@@ -86,7 +87,7 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
         }
     }
 
-    private boolean isCameraStillValid() {
+    public boolean isCameraStillValid() {
         if(world==null) {return false;}
         BlockState state = world.getBlockState(linkedCamera);
         if(state == null || state.isAir()){System.out.println("No block found at "+ linkedCamera); return false;}
@@ -97,6 +98,7 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
         return true;
 
     }
+
 
     @Override
     public void tick() {

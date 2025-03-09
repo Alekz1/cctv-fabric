@@ -18,6 +18,8 @@ public class ModBlocks {
             new CameraBlock(AbstractBlock.Settings.create().strength(2f).sounds(BlockSoundGroup.METAL)));
     public static final Block MONITOR_BLOCK = registerBlock("monitor_block",
             new MonitorBlock(AbstractBlock.Settings.create().strength(2f).sounds(BlockSoundGroup.METAL)));
+    public static final Block MONITOR = registerBlock("monitor",
+            new Monitor(AbstractBlock.Settings.create().strength(2f).sounds(BlockSoundGroup.METAL).nonOpaque()));
 
     private static Block registerBlock(String name, Block block){
         registerBlockItem(name, block);

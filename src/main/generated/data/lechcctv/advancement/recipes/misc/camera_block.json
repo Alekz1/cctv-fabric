@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_lens": {
+      "conditions": {
+        "items": [
+          {
+            "items": "lechcctv:lens"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "lechcctv:camera_block"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_lens"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "lechcctv:camera_block"
+    ]
+  }
+}

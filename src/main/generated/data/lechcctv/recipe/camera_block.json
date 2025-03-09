@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "L": {
+      "item": "lechcctv:lens"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    "III",
+    "IRI",
+    "ILI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "lechcctv:camera_block"
+  }
+}

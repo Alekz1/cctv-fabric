@@ -23,6 +23,7 @@ public class ModItemGroups {
                         entries.add(ModItems.LINK_TOOL);
                         entries.add(ModBlocks.MONITOR_BLOCK);
                         entries.add(ModBlocks.CAMERA_BLOCK);
+                        entries.add(ModBlocks.MONITOR);
                     })
                     .build()
             );
