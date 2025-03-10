@@ -38,10 +38,49 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
         return this.linkedCameraDirection;
     }
 
+    public Portal findNearPortal(BlockPos monitorPos) {
+        // Define the area to search
+        double scanRadius = 1.1;
+        Box scanArea = new Box(
+                monitorPos.getX() - scanRadius, monitorPos.getY() - scanRadius, monitorPos.getZ() - scanRadius,
+                monitorPos.getX() + scanRadius, monitorPos.getY() + scanRadius, monitorPos.getZ() + scanRadius
+        );
+
+        // Get a list of entities in the defined area
+        List<Entity> nearbyEntities = world.getEntitiesByClass(Entity.class, scanArea, entity -> entity instanceof Portal);
+
+        // Loop through the entities and find the portal
+        for (Entity entity : nearbyEntities) {
+            if (entity instanceof Portal) {
+                Portal portal = (Portal) entity;
+                return portal;
+            }
+        }
+        return null;
+    }
+    public boolean isPortalActive(BlockPos monitorPos) {
+        // Define the area to search
+        double scanRadius = 1.1;
+        Box scanArea = new Box(
+                monitorPos.getX() - scanRadius, monitorPos.getY() - scanRadius, monitorPos.getZ() - scanRadius,
+                monitorPos.getX() + scanRadius, monitorPos.getY() + scanRadius, monitorPos.getZ() + scanRadius
+        );
+
+        // Get a list of entities in the defined area
+        List<Entity> nearbyEntities = world.getEntitiesByClass(Entity.class, scanArea, entity -> entity instanceof Portal);
+
+        // Loop through the entities and find the portal
+        for (Entity entity : nearbyEntities) {
+            if (entity instanceof Portal) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void closePortal(BlockPos monitorPos) {
         // Define the area to search
-        this.linkedCamera = null;
-        double scanRadius = 1.5;
+        double scanRadius = 1.1;
         Box scanArea = new Box(
                 monitorPos.getX() - scanRadius, monitorPos.getY() - scanRadius, monitorPos.getZ() - scanRadius,
                 monitorPos.getX() + scanRadius, monitorPos.getY() + scanRadius, monitorPos.getZ() + scanRadius
@@ -55,6 +94,7 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
             if (entity instanceof Portal) {
                 Portal portal = (Portal) entity;
                 portal.remove(Entity.RemovalReason.KILLED);
+                System.out.println("Killed Portal");
             }
         }
     }
@@ -105,6 +145,7 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
         if (world != null && !world.isClient && linkedCamera != null) {
             if (!isCameraStillValid()) {
                 closePortal(pos);
+                this.linkedCamera = null;
                 markDirty();
             }
         }

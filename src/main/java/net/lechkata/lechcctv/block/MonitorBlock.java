@@ -46,6 +46,7 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
 
     public BlockPos camerapos;
     private Direction cameraface;
+    public boolean portalActive = false;
 
 
     @Override
@@ -108,45 +109,62 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
 
             }
 
-            if(camerapos!=null && cameraface!=null){
-                Portal portal = new Portal(Portal.ENTITY_TYPE, world);
-                portal.setDestDim(world.getRegistryKey());
-                portal.setPortalSize(1,1,1);
-                portal.setOriginPos(Vec3d.ofCenter(pos));
-                portal.setDestination(Vec3d.ofCenter(camerapos));
-                portal.setInteractable(false);
-                portal.setTeleportable(false);
-                Direction face = hit.getSide();
-                switch (face) {
-                    case NORTH -> portal.setOrientation(new Vec3d(-1, 0, 0), new Vec3d(0, 1, 0)); // Facing north (Z-negative)
-                    case SOUTH -> portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 1, 0)); // Facing south (Z-positive)
-                    case EAST -> portal.setOrientation(new Vec3d(0, 0, -1), new Vec3d(0, 1, 0)); // Facing east (X-positive)
-                    case WEST -> portal.setOrientation(new Vec3d(0, 0, 1), new Vec3d(0, 1, 0)); // Facing west (X-negative)
-                    case UP -> portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 0, -1)); // Facing up (Y-positive)
-                    case DOWN -> portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 0, 1)); // Facing down (Y-negative)
+            if(camerapos!=null && cameraface!=null) {
+                entity = world.getBlockEntity(pos);
+                if (entity instanceof MonitorBlockEntity monitorEntity) {
+                    portalActive = monitorEntity.isPortalActive(pos);
+                    if(portalActive&&player.isSneaking()){
+                        monitorEntity.closePortal(pos);
+                        player.sendMessage(Text.literal("Portal Closed"));
+                        return ItemActionResult.SUCCESS;
+                    }
+                    if(!monitorEntity.isPortalActive(pos) && !player.isSneaking()) {
+                    Portal portal = new Portal(Portal.ENTITY_TYPE, world);
+                    portal.setDestDim(world.getRegistryKey());
+                    portal.setPortalSize(1, 1, 1);
+                    portal.setOriginPos(Vec3d.ofCenter(pos));
+                    portal.setDestination(Vec3d.ofCenter(camerapos));
+                    portal.setInteractable(false);
+                    portal.setTeleportable(false);
+                    Direction face = hit.getSide();
+                    switch (face) {
+                        case NORTH ->
+                                portal.setOrientation(new Vec3d(-1, 0, 0), new Vec3d(0, 1, 0)); // Facing north (Z-negative)
+                        case SOUTH ->
+                                portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 1, 0)); // Facing south (Z-positive)
+                        case EAST ->
+                                portal.setOrientation(new Vec3d(0, 0, -1), new Vec3d(0, 1, 0)); // Facing east (X-positive)
+                        case WEST ->
+                                portal.setOrientation(new Vec3d(0, 0, 1), new Vec3d(0, 1, 0)); // Facing west (X-negative)
+                        case UP ->
+                                portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 0, -1)); // Facing up (Y-positive)
+                        case DOWN ->
+                                portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 0, 1)); // Facing down (Y-negative)
+                    }
+                    Vec3d offset = Vec3d.ofCenter(pos).add(Vec3d.of(face.getVector()).multiply(0.501)); // Offset from block center
+                    portal.setOriginPos(offset);
+                    switch (cameraface) {
+                        case NORTH -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
+                                new Vec3d(-1, 0, 0), new Vec3d(0, 1, 0))); // Camera facing north
+                        case SOUTH -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
+                                new Vec3d(1, 0, 0), new Vec3d(0, 1, 0))); // Camera facing south
+                        case EAST -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
+                                new Vec3d(0, 0, -1), new Vec3d(0, 1, 0))); // Camera facing east
+                        case WEST -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
+                                new Vec3d(0, 0, 1), new Vec3d(0, 1, 0))); // Camera facing west
+                        case UP -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
+                                new Vec3d(1, 0, 0), new Vec3d(0, 0, -1))); // Camera facing up
+                        case DOWN -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
+                                new Vec3d(1, 0, 0), new Vec3d(0, 0, 1))); // Camera facing down
+                    }
+                    if (portal.isPortalValid()) {
+                        portal.getWorld().spawnEntity(portal);
+                    } else {
+                        player.sendMessage(Text.literal("Invalid Portal!"));
+                    }
+                        return ItemActionResult.SUCCESS;
+                    }
                 }
-                Vec3d offset = Vec3d.ofCenter(pos).add(Vec3d.of(face.getVector()).multiply(0.501)); // Offset from block center
-                portal.setOriginPos(offset);
-                switch (cameraface) {
-                    case NORTH -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
-                            new Vec3d(-1, 0, 0), new Vec3d(0, 1, 0))); // Camera facing north
-                    case SOUTH -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
-                            new Vec3d(1, 0, 0), new Vec3d(0, 1, 0))); // Camera facing south
-                    case EAST -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
-                            new Vec3d(0, 0, -1), new Vec3d(0, 1, 0))); // Camera facing east
-                    case WEST -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
-                            new Vec3d(0, 0, 1), new Vec3d(0, 1, 0))); // Camera facing west
-                    case UP -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
-                            new Vec3d(1, 0, 0), new Vec3d(0, 0, -1))); // Camera facing up
-                    case DOWN -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
-                            new Vec3d(1, 0, 0), new Vec3d(0, 0, 1))); // Camera facing down
-                }
-                if(portal.isPortalValid()){
-                    portal.getWorld().spawnEntity(portal);
-                }else {
-                    player.sendMessage(Text.literal("Invalid Portal!"));
-                }
-                return ItemActionResult.SUCCESS;
             }
         }
         return ItemActionResult.FAIL;
