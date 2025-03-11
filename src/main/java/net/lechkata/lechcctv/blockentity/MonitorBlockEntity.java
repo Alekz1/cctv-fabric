@@ -107,9 +107,11 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
             cameraTag.putInt("CameraX", linkedCamera.getX());
             cameraTag.putInt("CameraY", linkedCamera.getY());
             cameraTag.putInt("CameraZ", linkedCamera.getZ());
+            cameraTag.putInt("CameraDirection", linkedCameraDirection.getId());
             tag.put("LinkedCamera", cameraTag); // Store inside "LinkedCamera"
             System.out.println("Saved camera position: "+ linkedCamera);
         }
+
     }
 
     @Override
@@ -120,6 +122,7 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
             linkedCamera = new BlockPos(cameraTag.getInt("CameraX"),
                     cameraTag.getInt("CameraY"),
                     cameraTag.getInt("CameraZ"));
+            linkedCameraDirection = Direction.byId(cameraTag.getInt("CameraDirection"));
             System.out.println("Loaded camera position: " + linkedCamera);
         } else {
             linkedCamera = null;

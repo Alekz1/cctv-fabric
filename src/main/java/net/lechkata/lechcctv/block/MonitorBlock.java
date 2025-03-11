@@ -1,7 +1,6 @@
 package net.lechkata.lechcctv.block;
 
 import com.mojang.serialization.MapCodec;
-import net.lechkata.lechcctv.blockentity.ModBlockEntities;
 import net.lechkata.lechcctv.blockentity.MonitorBlockEntity;
 import net.lechkata.lechcctv.component.ModDataComponentTypes;
 import net.lechkata.lechcctv.item.ModItems;
@@ -10,7 +9,6 @@ import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -20,7 +18,6 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.ItemActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -28,11 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import qouteall.imm_ptl.core.portal.Portal;
 import qouteall.imm_ptl.core.portal.PortalManipulation;
 
-import java.util.List;
 
 
 public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider {
-
     public MonitorBlock(Settings settings) {
         super(settings);
     }
@@ -46,7 +41,6 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
 
     public BlockPos camerapos;
     private Direction cameraface;
-    public boolean portalActive = false;
 
 
     @Override
@@ -101,6 +95,7 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
             BlockEntity entity = world.getBlockEntity(pos);
             if  (entity instanceof MonitorBlockEntity monitorEntity) {
                 camerapos = monitorEntity.getLinkedCamera();
+                cameraface = monitorEntity.getLinkedCameraDir();
                 Text msg = null;
                 if (camerapos != null) {
                     msg = Text.literal("CameraPos: X:" + camerapos.getX() + " Y:" + camerapos.getY() + "Z:" + camerapos.getZ());
@@ -112,8 +107,8 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
             if(camerapos!=null && cameraface!=null) {
                 entity = world.getBlockEntity(pos);
                 if (entity instanceof MonitorBlockEntity monitorEntity) {
-                    portalActive = monitorEntity.isPortalActive(pos);
-                    if(portalActive&&player.isSneaking()){
+                    boolean portalActive = monitorEntity.isPortalActive(pos);
+                    if(portalActive &&player.isSneaking()){
                         monitorEntity.closePortal(pos);
                         player.sendMessage(Text.literal("Portal Closed"));
                         return ItemActionResult.SUCCESS;

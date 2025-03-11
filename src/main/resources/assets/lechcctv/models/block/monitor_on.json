@@ -3,8 +3,8 @@
 	"parent": "monitor",
 	"texture_size": [64, 64],
 	"textures": {
-		"0": "lechcctv:block/monitor",
-		"particle": "lechcctv:block/monitor"
+		"0": "lechcctv:block/monitor_on",
+		"particle": "lechcctv:block/monitor_on"
 	},
 	"elements": [
 		{
@@ -88,8 +88,33 @@
 	],
 	"display": {
 		"thirdperson_righthand": {
-			"rotation": [69, 0, 0],
+			"rotation": [75, 0, 0],
 			"scale": [0.5, 0.5, 0.5]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [75, 0, 0],
+			"scale": [0.5, 0.5, 0.5]
+		},
+		"firstperson_righthand": {
+			"rotation": [0, -180, 0],
+			"translation": [0, 1.75, 0],
+			"scale": [0.5, 0.5, 0.5]
+		},
+		"firstperson_lefthand": {
+			"rotation": [0, -180, 0],
+			"translation": [0, 1.75, 0],
+			"scale": [0.5, 0.5, 0.5]
+		},
+		"ground": {
+			"scale": [0.5, 0.5, 0.5]
+		},
+		"gui": {
+			"rotation": [180, 0, 180],
+			"translation": [0, 1, 0]
+		},
+		"head": {
+			"translation": [0, 2, -0.75],
+			"scale": [1.18359, 1.06445, 1.20117]
 		}
 	},
 	"groups": [

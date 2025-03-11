@@ -15,6 +15,7 @@ import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ItemActionResult;
@@ -29,13 +30,16 @@ import qouteall.imm_ptl.core.portal.PortalManipulation;
 
 public class Monitor extends HorizontalFacingBlock implements BlockEntityProvider {
     public static final MapCodec<Monitor> CODEC = createCodec(Monitor::new);
+    public static final BooleanProperty POWERED = BooleanProperty.of("powered");
     public BlockPos camerapos;
     public Direction cameraface;
     public boolean portalActive = false;
 
     protected Monitor(Settings settings) {
         super(settings);
+        setDefaultState(getDefaultState().with(POWERED, false));
     }
+
 
     @Override
     protected MapCodec<? extends HorizontalFacingBlock> getCodec() {
@@ -51,6 +55,7 @@ public class Monitor extends HorizontalFacingBlock implements BlockEntityProvide
     @Override
     protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
         builder.add(FACING);
+        builder.add(POWERED);
     }
 
     @Override
@@ -122,6 +127,7 @@ public class Monitor extends HorizontalFacingBlock implements BlockEntityProvide
                     portalActive = monitorEntity.isPortalActive(pos);
                     if(portalActive&&player.isSneaking()){
                         monitorEntity.closePortal(pos);
+                        world.setBlockState(pos, state.with(POWERED, false));
                         player.sendMessage(Text.literal("Portal Closed"));
                         return ItemActionResult.SUCCESS;
                     }
@@ -168,6 +174,7 @@ public class Monitor extends HorizontalFacingBlock implements BlockEntityProvide
                         }
                         if (portal.isPortalValid()) {
                             portal.getWorld().spawnEntity(portal);
+                            world.setBlockState(pos, state.with(POWERED, true));
                         } else {
                             player.sendMessage(Text.literal("Invalid Portal!"));
                             return ItemActionResult.FAIL;
