@@ -28,8 +28,8 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .criterion(hasItem(Items.GLASS), conditionsFromItem(Items.GLASS))
                 .offerTo(recipeExporter);
         ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModBlocks.CAMERA_BLOCK)
-                .pattern("III")
-                .pattern("IRI")
+                .pattern("ILI")
+                .pattern("LRL")
                 .pattern("ILI")
                 .input('I', Items.IRON_INGOT)
                 .input('R', Items.REDSTONE)
@@ -46,8 +46,8 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .criterion(hasItem(Items.GLOWSTONE_DUST), conditionsFromItem(Items.GLOWSTONE_DUST))
                 .offerTo(recipeExporter);
         ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModBlocks.MONITOR_BLOCK)
-                .pattern("III")
-                .pattern("IRI")
+                .pattern("ISI")
+                .pattern("SRS")
                 .pattern("ISI")
                 .input('I', Items.IRON_INGOT)
                 .input('R', Items.REDSTONE)
@@ -63,6 +63,14 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .input('S', Items.STICK)
                 .criterion(hasItem(Items.REDSTONE), conditionsFromItem(Items.REDSTONE))
                 .offerTo(recipeExporter);
-
+        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModBlocks.MONITOR)
+                .pattern("III")
+                .pattern("IRI")
+                .pattern("ISI")
+                .input('I', Items.IRON_INGOT)
+                .input('R', Items.REDSTONE)
+                .input('S', ModItems.SCREEN)
+                .criterion(hasItem(ModItems.SCREEN), conditionsFromItem(ModItems.SCREEN))
+                .offerTo(recipeExporter);
     }
 }

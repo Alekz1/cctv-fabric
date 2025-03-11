@@ -94,7 +94,6 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
             if (entity instanceof Portal) {
                 Portal portal = (Portal) entity;
                 portal.remove(Entity.RemovalReason.KILLED);
-                System.out.println("Killed Portal");
             }
         }
     }
@@ -109,7 +108,6 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
             cameraTag.putInt("CameraZ", linkedCamera.getZ());
             cameraTag.putInt("CameraDirection", linkedCameraDirection.getId());
             tag.put("LinkedCamera", cameraTag); // Store inside "LinkedCamera"
-            System.out.println("Saved camera position: "+ linkedCamera);
         }
 
     }
@@ -123,19 +121,16 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
                     cameraTag.getInt("CameraY"),
                     cameraTag.getInt("CameraZ"));
             linkedCameraDirection = Direction.byId(cameraTag.getInt("CameraDirection"));
-            System.out.println("Loaded camera position: " + linkedCamera);
         } else {
             linkedCamera = null;
-            System.out.println("No saved camera found.");
         }
     }
 
     public boolean isCameraStillValid() {
         if(world==null) {return false;}
         BlockState state = world.getBlockState(linkedCamera);
-        if(state == null || state.isAir()){System.out.println("No block found at "+ linkedCamera); return false;}
+        if(state == null || state.isAir()){return false;}
         if(!(state.getBlock() instanceof CameraBlock)) {
-            System.out.println("Block found at "+linkedCamera+" but is not a camera");
             return false;
         }
         return true;

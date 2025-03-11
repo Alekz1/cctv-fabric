@@ -85,10 +85,7 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
                     monitorEntity.setLinkedCamera(camerapos, cameraface); // No linked camera at start
                     monitorEntity.markDirty();
                     world.updateListeners(pos, state, state, Block.NOTIFY_ALL); // Ensures block updates
-                    player.sendMessage(Text.literal("Camerapos saved monitorEntity!"+camerapos));
                 }
-                player.sendMessage(Text.literal("Camerapos: "+ Vec3d.of(camerapos)));
-                player.sendMessage(Text.literal("Monitorpos: "+ Vec3d.of(pos)));
                 return ItemActionResult.SUCCESS;
             }
         } else if (stack.getItem() == Items.AIR) {
@@ -96,12 +93,6 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
             if  (entity instanceof MonitorBlockEntity monitorEntity) {
                 camerapos = monitorEntity.getLinkedCamera();
                 cameraface = monitorEntity.getLinkedCameraDir();
-                Text msg = null;
-                if (camerapos != null) {
-                    msg = Text.literal("CameraPos: X:" + camerapos.getX() + " Y:" + camerapos.getY() + "Z:" + camerapos.getZ());
-                    player.sendMessage(msg); // No linked camera at start
-                }
-
             }
 
             if(camerapos!=null && cameraface!=null) {
@@ -110,7 +101,6 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
                     boolean portalActive = monitorEntity.isPortalActive(pos);
                     if(portalActive &&player.isSneaking()){
                         monitorEntity.closePortal(pos);
-                        player.sendMessage(Text.literal("Portal Closed"));
                         return ItemActionResult.SUCCESS;
                     }
                     if(!monitorEntity.isPortalActive(pos) && !player.isSneaking()) {
@@ -154,8 +144,6 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
                     }
                     if (portal.isPortalValid()) {
                         portal.getWorld().spawnEntity(portal);
-                    } else {
-                        player.sendMessage(Text.literal("Invalid Portal!"));
                     }
                         return ItemActionResult.SUCCESS;
                     }

@@ -13,7 +13,7 @@ public class ModItems {
 
     public static final Item SCREEN = registerItem("screen", new Item(new Item.Settings()));
     public static final Item LENS = registerItem("lens", new Item(new Item.Settings()));
-    public static final Item LINK_TOOL = registerItem("link_tool", new LinkToolItem(new Item.Settings()));
+    public static final Item LINK_TOOL = registerItem("link_tool", new LinkToolItem(new Item.Settings().maxCount(1)));
 
     private static Item registerItem(String name, Item item){
         return Registry.register(Registries.ITEM, Identifier.of(CCTV.MOD_ID, name), item);

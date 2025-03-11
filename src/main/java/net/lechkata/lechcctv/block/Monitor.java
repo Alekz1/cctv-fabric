@@ -100,10 +100,7 @@ public class Monitor extends HorizontalFacingBlock implements BlockEntityProvide
                     monitorEntity.setLinkedCamera(camerapos, cameraface);
                     monitorEntity.markDirty();
                     world.updateListeners(pos, state, state, Block.NOTIFY_ALL); // Ensures block updates
-                    player.sendMessage(Text.literal("Camerapos saved monitorEntity!"+camerapos+"Direction: "+cameraface));
                 }
-                player.sendMessage(Text.literal("Camerapos: "+ Vec3d.of(camerapos)));
-                player.sendMessage(Text.literal("Monitorpos: "+ Vec3d.of(pos)));
                 return ItemActionResult.SUCCESS;
             }
             return ItemActionResult.FAIL;
@@ -113,12 +110,6 @@ public class Monitor extends HorizontalFacingBlock implements BlockEntityProvide
             if  (entity instanceof MonitorBlockEntity monitorEntity) {
                 camerapos = monitorEntity.getLinkedCamera();
                 cameraface = monitorEntity.getLinkedCameraDir();
-                Text msg = null;
-                if (camerapos != null) {
-                    msg = Text.literal("CameraPos: X:" + camerapos.getX() + " Y:" + camerapos.getY() + "Z:" + camerapos.getZ()+"Direction: "+cameraface);
-                    player.sendMessage(msg); // No linked camera at start
-                }
-
             }
 
             if(camerapos!=null && cameraface!=null){
@@ -128,10 +119,8 @@ public class Monitor extends HorizontalFacingBlock implements BlockEntityProvide
                     if(portalActive&&player.isSneaking()){
                         monitorEntity.closePortal(pos);
                         world.setBlockState(pos, state.with(POWERED, false));
-                        player.sendMessage(Text.literal("Portal Closed"));
                         return ItemActionResult.SUCCESS;
                     }
-                    player.sendMessage(Text.literal("Portal Active: "+portalActive));
                     if(!monitorEntity.isPortalActive(pos) && !player.isSneaking()) {
                         System.out.println("Creating Portal");
                         qouteall.imm_ptl.core.portal.Portal portal = new qouteall.imm_ptl.core.portal.Portal(Portal.ENTITY_TYPE, world);
@@ -176,7 +165,6 @@ public class Monitor extends HorizontalFacingBlock implements BlockEntityProvide
                             portal.getWorld().spawnEntity(portal);
                             world.setBlockState(pos, state.with(POWERED, true));
                         } else {
-                            player.sendMessage(Text.literal("Invalid Portal!"));
                             return ItemActionResult.FAIL;
                         }
                     }
