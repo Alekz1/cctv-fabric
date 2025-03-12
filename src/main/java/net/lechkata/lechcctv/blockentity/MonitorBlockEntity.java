@@ -13,8 +13,8 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import qouteall.imm_ptl.core.portal.Portal;
-
 import java.util.List;
+import static net.lechkata.lechcctv.block.Monitor.POWERED;
 
 public class MonitorBlockEntity extends BlockEntity implements TickableBlockEntity {
     private BlockPos linkedCamera;
@@ -71,8 +71,15 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
 
         // Loop through the entities and find the portal
         for (Entity entity : nearbyEntities) {
-            if (entity instanceof Portal) {
-                return true;
+            if (entity instanceof Portal portal) {
+                BlockPos portalDestination = new BlockPos(
+                        (int) Math.floor(portal.getDestination().x),
+                        (int) Math.floor(portal.getDestination().y),
+                        (int) Math.floor(portal.getDestination().z)
+                );
+                if (portalDestination.equals(linkedCamera)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -91,9 +98,16 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
 
         // Loop through the entities and find the portal
         for (Entity entity : nearbyEntities) {
-            if (entity instanceof Portal) {
-                Portal portal = (Portal) entity;
-                portal.remove(Entity.RemovalReason.KILLED);
+            if (entity instanceof Portal portal) {
+                BlockPos portalDestination = new BlockPos(
+                        (int) Math.floor(portal.getDestination().x),
+                        (int) Math.floor(portal.getDestination().y),
+                        (int) Math.floor(portal.getDestination().z)
+                );
+
+                if (portalDestination.equals(linkedCamera)) {
+                    portal.remove(Entity.RemovalReason.KILLED);
+                }
             }
         }
     }
@@ -144,6 +158,8 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
             if (!isCameraStillValid()) {
                 closePortal(pos);
                 this.linkedCamera = null;
+                BlockState state = world.getBlockState(pos);
+                world.setBlockState(pos, state.with(POWERED, false));
                 markDirty();
             }
         }
