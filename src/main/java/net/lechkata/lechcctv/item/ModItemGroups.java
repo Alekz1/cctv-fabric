@@ -24,6 +24,7 @@ public class ModItemGroups {
                         entries.add(ModBlocks.MONITOR_BLOCK);
                         entries.add(ModBlocks.CAMERA_BLOCK);
                         entries.add(ModBlocks.MONITOR);
+                        entries.add(ModBlocks.CAMERA);
                     })
                     .build()
             );

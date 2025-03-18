@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "lechcctv:block/camera" },
+    "facing=east":  { "model": "lechcctv:block/camera", "y": 90 },
+    "facing=south": { "model": "lechcctv:block/camera", "y": 180 },
+    "facing=west":  { "model": "lechcctv:block/camera", "y": 270 }
+  }
+}

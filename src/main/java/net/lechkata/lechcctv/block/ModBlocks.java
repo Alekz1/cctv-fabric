@@ -20,7 +20,8 @@ public class ModBlocks {
             new MonitorBlock(AbstractBlock.Settings.create().strength(2f).sounds(BlockSoundGroup.METAL)));
     public static final Block MONITOR = registerBlock("monitor",
             new Monitor(AbstractBlock.Settings.create().strength(2f).sounds(BlockSoundGroup.METAL).nonOpaque().luminance(state -> state.get(Monitor.POWERED) ? 7 : 0)));
-
+    public static final Block CAMERA = registerBlock("camera",
+            new Camera(AbstractBlock.Settings.create().strength(2f).sounds(BlockSoundGroup.METAL).nonOpaque()));
     private static Block registerBlock(String name, Block block){
         registerBlockItem(name, block);
         return  Registry.register(Registries.BLOCK, Identifier.of(CCTV.MOD_ID, name), block);
