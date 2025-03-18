@@ -1,17 +1,16 @@
 package net.lechkata.lechcctv.blockentity;
 
+import net.lechkata.lechcctv.block.CCamera;
 import net.lechkata.lechcctv.block.CameraBlock;
 import net.lechkata.lechcctv.util.TickableBlockEntity;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
 import qouteall.imm_ptl.core.portal.Portal;
 import java.util.List;
 import static net.lechkata.lechcctv.block.Monitor.POWERED;
@@ -144,11 +143,18 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
         if(world==null) {return false;}
         BlockState state = world.getBlockState(linkedCamera);
         if(state == null || state.isAir()){return false;}
-        if(!(state.getBlock() instanceof CameraBlock)) {
+        if(!(state.getBlock() instanceof CameraBlock) && !(state.getBlock() instanceof CCamera) ) {
             return false;
         }
         return true;
+    }
 
+    public String getCameratype() {
+        if(world==null){return null;}
+        BlockState state = world.getBlockState(linkedCamera);
+        if(state.getBlock() instanceof CameraBlock){return "cblock";}
+        if(state.getBlock() instanceof CameraBlock){return "camera";}
+        return null;
     }
 
 

@@ -2,9 +2,9 @@
   "item.lechcctv.screen": "Screen",
   "item.lechcctv.lens": "Lens",
   "item.lechcctv.link_tool": "Link Tool",
-
   "block.lechcctv.camera_block": "Camera Block",
   "block.lechcctv.monitor_block": "Monitor Block",
   "itemgroup.lechcctv.cctv_items": "CCTV",
-  "block.lechcctv.monitor": "Monitor"
+  "block.lechcctv.monitor": "Monitor",
+  "block.lechcctv.camera": "Camera"
 }

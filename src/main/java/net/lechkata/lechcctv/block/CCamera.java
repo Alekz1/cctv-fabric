@@ -7,9 +7,9 @@ import net.minecraft.block.HorizontalFacingBlock;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.state.StateManager;
 
-public class Camera extends HorizontalFacingBlock {
-    public final static MapCodec<Camera> CODEC = createCodec(Camera::new);
-    protected Camera(Settings settings) {
+public class CCamera extends HorizontalFacingBlock {
+    public final static MapCodec<CCamera> CODEC = createCodec(CCamera::new);
+    protected CCamera(Settings settings) {
         super(settings);
     }
 
