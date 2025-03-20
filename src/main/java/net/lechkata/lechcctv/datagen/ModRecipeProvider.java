@@ -46,8 +46,8 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .criterion(hasItem(Items.GLOWSTONE_DUST), conditionsFromItem(Items.GLOWSTONE_DUST))
                 .offerTo(recipeExporter);
         ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModBlocks.MONITOR_BLOCK)
-                .pattern("ISI")
-                .pattern("SRS")
+                .pattern("III")
+                .pattern("IRI")
                 .pattern("ISI")
                 .input('I', Items.IRON_INGOT)
                 .input('R', Items.REDSTONE)
@@ -64,7 +64,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .criterion(hasItem(Items.REDSTONE), conditionsFromItem(Items.REDSTONE))
                 .offerTo(recipeExporter);
         ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModBlocks.MONITOR)
-                .pattern("III")
+                .pattern(" I ")
                 .pattern("IRI")
                 .pattern("ISI")
                 .input('I', Items.IRON_INGOT)

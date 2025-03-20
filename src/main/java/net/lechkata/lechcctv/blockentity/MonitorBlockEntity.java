@@ -2,6 +2,7 @@ package net.lechkata.lechcctv.blockentity;
 
 import net.lechkata.lechcctv.block.CCamera;
 import net.lechkata.lechcctv.block.CameraBlock;
+import net.lechkata.lechcctv.block.Monitor;
 import net.lechkata.lechcctv.util.TickableBlockEntity;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -39,7 +40,7 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
 
     public Portal findNearPortal(BlockPos monitorPos) {
         // Define the area to search
-        double scanRadius = 1.1;
+        double scanRadius = 1.01;
         Box scanArea = new Box(
                 monitorPos.getX() - scanRadius, monitorPos.getY() - scanRadius, monitorPos.getZ() - scanRadius,
                 monitorPos.getX() + scanRadius, monitorPos.getY() + scanRadius, monitorPos.getZ() + scanRadius
@@ -59,7 +60,7 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
     }
     public boolean isPortalActive(BlockPos monitorPos) {
         // Define the area to search
-        double scanRadius = 1.1;
+        double scanRadius = 1.01;
         Box scanArea = new Box(
                 monitorPos.getX() - scanRadius, monitorPos.getY() - scanRadius, monitorPos.getZ() - scanRadius,
                 monitorPos.getX() + scanRadius, monitorPos.getY() + scanRadius, monitorPos.getZ() + scanRadius
@@ -86,7 +87,7 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
 
     public void closePortal(BlockPos monitorPos) {
         // Define the area to search
-        double scanRadius = 1.1;
+        double scanRadius = 1;
         Box scanArea = new Box(
                 monitorPos.getX() - scanRadius, monitorPos.getY() - scanRadius, monitorPos.getZ() - scanRadius,
                 monitorPos.getX() + scanRadius, monitorPos.getY() + scanRadius, monitorPos.getZ() + scanRadius
@@ -165,7 +166,9 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
                 closePortal(pos);
                 this.linkedCamera = null;
                 BlockState state = world.getBlockState(pos);
+                if (state.getBlock() instanceof Monitor){
                 world.setBlockState(pos, state.with(POWERED, false));
+                }
                 markDirty();
             }
         }

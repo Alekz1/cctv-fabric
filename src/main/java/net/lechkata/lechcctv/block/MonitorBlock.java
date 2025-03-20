@@ -11,8 +11,11 @@ import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ItemActionResult;
@@ -27,14 +30,27 @@ import qouteall.imm_ptl.core.portal.PortalManipulation;
 
 
 
-public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider {
+public class MonitorBlock extends HorizontalFacingBlock implements BlockEntityProvider {
     public MonitorBlock(Settings settings) {
         super(settings);
     }
     public static final MapCodec<MonitorBlock> CODEC = MonitorBlock.createCodec(MonitorBlock::new);
+    public static final BooleanProperty POWERED = BooleanProperty.of("powered");
+
+    @Nullable
+    @Override
+    public  BlockState getPlacementState(ItemPlacementContext ctx) {
+        return this.getDefaultState().with(FACING, ctx.getHorizontalPlayerFacing().getOpposite());
+    }
 
     @Override
-    protected MapCodec<? extends BlockWithEntity> getCodec() {
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
+        builder.add(POWERED);
+    }
+
+    @Override
+    protected MapCodec<? extends HorizontalFacingBlock> getCodec() {
         return CODEC;
     }
 
@@ -101,17 +117,18 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
                     boolean portalActive = monitorEntity.isPortalActive(pos);
                     if(portalActive &&player.isSneaking()){
                         monitorEntity.closePortal(pos);
+                        world.setBlockState(pos, state.with(POWERED, false));
                         return ItemActionResult.SUCCESS;
                     }
                     if(!monitorEntity.isPortalActive(pos) && !player.isSneaking()) {
                     Portal portal = new Portal(Portal.ENTITY_TYPE, world);
                     portal.setDestDim(world.getRegistryKey());
-                    portal.setPortalSize(1, 1, 1);
+                    portal.setPortalSize(0.9, 0.8, 1);
                     portal.setOriginPos(Vec3d.ofCenter(pos));
                     portal.setDestination(Vec3d.ofCenter(camerapos));
                     portal.setInteractable(false);
                     portal.setTeleportable(false);
-                    Direction face = hit.getSide();
+                    Direction face = state.get(FACING);
                     switch (face) {
                         case NORTH ->
                                 portal.setOrientation(new Vec3d(-1, 0, 0), new Vec3d(0, 1, 0)); // Facing north (Z-negative)
@@ -121,10 +138,11 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
                                 portal.setOrientation(new Vec3d(0, 0, -1), new Vec3d(0, 1, 0)); // Facing east (X-positive)
                         case WEST ->
                                 portal.setOrientation(new Vec3d(0, 0, 1), new Vec3d(0, 1, 0)); // Facing west (X-negative)
-                        case UP ->
-                                portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 0, -1)); // Facing up (Y-positive)
-                        case DOWN ->
-                                portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 0, 1)); // Facing down (Y-negative)
+                        case UP, DOWN -> {return ItemActionResult.FAIL;}
+//                        case UP ->
+//                                portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 0, -1)); // Facing up (Y-positive)
+//                        case DOWN ->
+//                                portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 0, 1)); // Facing down (Y-negative)
                     }
                     Vec3d offset = Vec3d.ofCenter(pos).add(Vec3d.of(face.getVector()).multiply(0.501)); // Offset from block center
                     portal.setOriginPos(offset);
@@ -144,6 +162,7 @@ public class MonitorBlock extends BlockWithEntity implements BlockEntityProvider
                     }
                     if (portal.isPortalValid()) {
                         portal.getWorld().spawnEntity(portal);
+                        world.setBlockState(pos, state.with(POWERED, true));
                     }
                         return ItemActionResult.SUCCESS;
                     }
