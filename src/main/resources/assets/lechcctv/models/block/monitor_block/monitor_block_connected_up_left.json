@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "lechcctv:block/monitor_block_end",
+    "down": "lechcctv:block/monitor_block_end",
+    "up": "lechcctv:block/monitor_block_end",
+    "north": "lechcctv:block/monitor_block/monitor_block_connected_up_left",
+    "east": "lechcctv:block/monitor_block_end",
+    "south": "lechcctv:block/monitor_block_end",
+    "west": "lechcctv:block/monitor_block_end"
+  }
+}

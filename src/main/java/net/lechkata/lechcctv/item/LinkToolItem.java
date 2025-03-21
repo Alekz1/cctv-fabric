@@ -38,7 +38,6 @@ public class LinkToolItem extends Item {
                 context.getStack().set(ModDataComponentTypes.COORDINATES, context.getBlockPos());
                 context.getStack().set(ModDataComponentTypes.DIRECTION, state.get(CCamera.FACING));
                 context.getPlayer().sendMessage(msg);
-                System.out.println(state.get(CCamera.FACING));
             }
         }
 

@@ -3,6 +3,7 @@ package net.lechkata.lechcctv.blockentity;
 import net.lechkata.lechcctv.block.CCamera;
 import net.lechkata.lechcctv.block.CameraBlock;
 import net.lechkata.lechcctv.block.Monitor;
+import net.lechkata.lechcctv.block.MonitorBlock;
 import net.lechkata.lechcctv.util.TickableBlockEntity;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -12,13 +13,117 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import qouteall.imm_ptl.core.portal.Portal;
-import java.util.List;
+
+import java.util.*;
+
 import static net.lechkata.lechcctv.block.Monitor.POWERED;
+import static net.lechkata.lechcctv.block.MonitorBlock.getLeftDirection;
+import static net.lechkata.lechcctv.block.MonitorBlock.getRightDirection;
 
 public class MonitorBlockEntity extends BlockEntity implements TickableBlockEntity {
     private BlockPos linkedCamera;
     private Direction linkedCameraDirection;// Stores the linked camera position
+    private int width = 1; // Default size
+    private int height = 1;
+
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void updateSize() {
+        if (world == null) return;
+
+        BlockPos startPos = getPos();
+        Direction facing = getCachedState().get(MonitorBlock.FACING);
+
+        width = countConnectedMonitors(startPos, getRightDirection(facing)) + countConnectedMonitors(startPos, getLeftDirection(facing)) + 1;
+        height = countConnectedMonitors(startPos, Direction.UP) + countConnectedMonitors(startPos, Direction.DOWN) + 1;
+
+        markDirty(); // Save changes
+    }
+
+    private int countConnectedMonitors(BlockPos startPos, Direction direction) {
+        int count = 0;
+        BlockPos currentPos = startPos.offset(direction);
+
+        while (world.getBlockState(currentPos).getBlock() instanceof MonitorBlock &&
+                world.getBlockState(currentPos).get(MonitorBlock.FACING) == getCachedState().get(MonitorBlock.FACING)) {
+            count++;
+            currentPos = currentPos.offset(direction);
+        }
+        return count;
+    }
+
+    public Vec3d getMonitorCenter() {
+        if (world == null) return Vec3d.ofCenter(pos);
+
+        BlockPos startPos = getPos();
+        Direction facing = getCachedState().get(MonitorBlock.FACING);
+
+        // Get the bounds of the connected monitor grid
+        int minX = startPos.getX();
+        int maxX = startPos.getX();
+        int minY = startPos.getY();
+        int maxY = startPos.getY();
+        int minZ = startPos.getZ();
+        int maxZ = startPos.getZ();
+
+        for (BlockPos monitorPos : getConnectedMonitors()) {
+            minX = Math.min(minX, monitorPos.getX());
+            maxX = Math.max(maxX, monitorPos.getX());
+            minY = Math.min(minY, monitorPos.getY());
+            maxY = Math.max(maxY, monitorPos.getY());
+            minZ = Math.min(minZ, monitorPos.getZ());
+            maxZ = Math.max(maxZ, monitorPos.getZ());
+        }
+
+        // Compute the exact center
+        double centerX = (minX + maxX) / 2.0 + 0.5;
+        double centerY = (minY + maxY) / 2.0 + 0.5;
+        double centerZ = (minZ + maxZ) / 2.0 + 0.5;
+
+        System.out.println(new Vec3d(centerX,centerY,centerZ));
+        return new Vec3d(centerX, centerY, centerZ);
+    }
+
+    private Set<BlockPos> getConnectedMonitors() {
+        Set<BlockPos> monitors = new HashSet<>();
+        Queue<BlockPos> toCheck = new LinkedList<>();
+        toCheck.add(this.pos); // Start from this monitor
+
+        Direction facing = getCachedState().get(MonitorBlock.FACING); // Get block's facing direction
+
+        while (!toCheck.isEmpty()) {
+            BlockPos current = toCheck.poll();
+            if (!monitors.contains(current)) {
+                monitors.add(current);
+
+                // Check all four directions (left, right, up, down)
+                for (Direction dir : new Direction[]{
+                        Direction.UP, Direction.DOWN,
+                        getLeftDirection(facing), getRightDirection(facing)}) {
+
+                    BlockPos neighbor = current.offset(dir);
+                    if (world.getBlockState(neighbor).getBlock() instanceof MonitorBlock &&
+                            world.getBlockState(neighbor).get(MonitorBlock.FACING) == facing) {
+
+                        toCheck.add(neighbor);
+                    }
+                }
+            }
+        }
+        return monitors;
+    }
+
+
+
 
     public MonitorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MONITOR_BLOCK_ENTITY, pos, state);
@@ -77,9 +182,7 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
                         (int) Math.floor(portal.getDestination().y),
                         (int) Math.floor(portal.getDestination().z)
                 );
-                if (portalDestination.equals(linkedCamera)) {
-                    return true;
-                }
+                return true;
             }
         }
         return false;
@@ -104,10 +207,8 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
                         (int) Math.floor(portal.getDestination().y),
                         (int) Math.floor(portal.getDestination().z)
                 );
+                portal.remove(Entity.RemovalReason.KILLED);
 
-                if (portalDestination.equals(linkedCamera)) {
-                    portal.remove(Entity.RemovalReason.KILLED);
-                }
             }
         }
     }
@@ -152,9 +253,15 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
 
     public String getCameratype() {
         if(world==null){return null;}
-        BlockState state = world.getBlockState(linkedCamera);
-        if(state.getBlock() instanceof CameraBlock){return "cblock";}
-        if(state.getBlock() instanceof CameraBlock){return "camera";}
+        if(linkedCamera!=null) {
+            BlockState state = world.getBlockState(linkedCamera);
+            if (state.getBlock() instanceof CameraBlock) {
+                return "cblock";
+            }
+            if (state.getBlock() instanceof CameraBlock) {
+                return "camera";
+            }
+        }
         return null;
     }
 
@@ -166,9 +273,7 @@ public class MonitorBlockEntity extends BlockEntity implements TickableBlockEnti
                 closePortal(pos);
                 this.linkedCamera = null;
                 BlockState state = world.getBlockState(pos);
-                if (state.getBlock() instanceof Monitor){
-                world.setBlockState(pos, state.with(POWERED, false));
-                }
+                if(state.getBlock() instanceof Monitor){world.setBlockState(pos, state.with(POWERED, false));}
                 markDirty();
             }
         }

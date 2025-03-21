@@ -1,6 +1,7 @@
 package net.lechkata.lechcctv.block;
 
 import com.mojang.serialization.MapCodec;
+import net.fabricmc.loader.impl.lib.sat4j.core.VecInt;
 import net.lechkata.lechcctv.blockentity.MonitorBlockEntity;
 import net.lechkata.lechcctv.component.ModDataComponentTypes;
 import net.lechkata.lechcctv.item.ModItems;
@@ -23,30 +24,96 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import qouteall.imm_ptl.core.portal.Portal;
 import qouteall.imm_ptl.core.portal.PortalManipulation;
 
+import java.util.Objects;
 
 
 public class MonitorBlock extends HorizontalFacingBlock implements BlockEntityProvider {
     public MonitorBlock(Settings settings) {
         super(settings);
+        setDefaultState(getStateManager().getDefaultState()
+                .with(FACING, Direction.NORTH)  // Default facing
+                .with(CONNECTED_LEFT, false)
+                .with(CONNECTED_RIGHT, false)
+                .with(CONNECTED_UP, false)
+                .with(CONNECTED_DOWN, false)
+        );
     }
     public static final MapCodec<MonitorBlock> CODEC = MonitorBlock.createCodec(MonitorBlock::new);
-    public static final BooleanProperty POWERED = BooleanProperty.of("powered");
 
-    @Nullable
+    public static final BooleanProperty CONNECTED_LEFT = BooleanProperty.of("connected_left");
+    public static final BooleanProperty CONNECTED_RIGHT = BooleanProperty.of("connected_right");
+    public static final BooleanProperty CONNECTED_UP = BooleanProperty.of("connected_up");
+    public static final BooleanProperty CONNECTED_DOWN = BooleanProperty.of("connected_down");
+
+
+
     @Override
-    public  BlockState getPlacementState(ItemPlacementContext ctx) {
-        return this.getDefaultState().with(FACING, ctx.getHorizontalPlayerFacing().getOpposite());
+    public BlockState getPlacementState(ItemPlacementContext ctx) {
+        World world = ctx.getWorld();
+        BlockPos pos = ctx.getBlockPos();
+        Direction facing = ctx.getHorizontalPlayerFacing().getOpposite(); // Get the player's facing direction
+        boolean isSneaking = ctx.getPlayer() != null && ctx.getPlayer().isSneaking(); // Check if the player is sneaking
+
+        // Corrected left/right calculations
+        boolean left = !isSneaking && isSameFacingMonitor(world, pos.offset(getLeftDirection(facing)), facing);
+        boolean right = !isSneaking && isSameFacingMonitor(world, pos.offset(getRightDirection(facing)), facing);
+        boolean up = !isSneaking && isSameFacingMonitor(world, pos.up(), facing);
+        boolean down = !isSneaking && isSameFacingMonitor(world, pos.down(), facing);
+
+        return this.getDefaultState()
+                .with(FACING, facing)
+                .with(CONNECTED_LEFT, left)
+                .with(CONNECTED_RIGHT, right)
+                .with(CONNECTED_UP, up)
+                .with(CONNECTED_DOWN, down);
     }
+
+    private boolean isSameFacingMonitor(World world, BlockPos pos, Direction facing) {
+        BlockState state = world.getBlockState(pos);
+        return state.getBlock() instanceof MonitorBlock && state.get(FACING) == facing;
+    }
+
+    // Helper methods to determine the left and right direction based on facing
+    public static Direction getLeftDirection(Direction facing) {
+        return facing.rotateYCounterclockwise();
+    }
+
+    public static Direction getRightDirection(Direction facing) {
+        return facing.rotateYClockwise();
+    }
+
+
+    @Override
+    public void neighborUpdate(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
+        Direction facing = state.get(FACING);
+
+        boolean right = isSameFacingMonitor(world, pos.offset(getLeftDirection(facing)), facing);
+        boolean left = isSameFacingMonitor(world, pos.offset(getRightDirection(facing)), facing);
+        boolean up = isSameFacingMonitor(world, pos.up(), facing);
+        boolean down = isSameFacingMonitor(world, pos.down(), facing);
+
+        world.setBlockState(pos, state
+                .with(CONNECTED_LEFT, left)
+                .with(CONNECTED_RIGHT, right)
+                .with(CONNECTED_UP, up)
+                .with(CONNECTED_DOWN, down), 3);
+    }
+
+
 
     @Override
     protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
         builder.add(FACING);
-        builder.add(POWERED);
+        builder.add(CONNECTED_DOWN);
+        builder.add(CONNECTED_UP);
+        builder.add(CONNECTED_LEFT);
+        builder.add(CONNECTED_RIGHT);
     }
 
     @Override
@@ -57,6 +124,11 @@ public class MonitorBlock extends HorizontalFacingBlock implements BlockEntityPr
 
     public BlockPos camerapos;
     private Direction cameraface;
+    public Vec3d center;
+    private int mh;
+    private int mw;
+    private String cameratype;
+    private Vec3d dest;
 
 
     @Override
@@ -78,6 +150,9 @@ public class MonitorBlock extends HorizontalFacingBlock implements BlockEntityPr
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
         super.onPlaced(world, pos, state, placer, itemStack);
+        if (world.getBlockEntity(pos) instanceof MonitorBlockEntity entity) {
+            entity.updateSize();
+        }
 
         if (!world.isClient) {
             BlockEntity entity = world.getBlockEntity(pos);
@@ -104,11 +179,15 @@ public class MonitorBlock extends HorizontalFacingBlock implements BlockEntityPr
                 }
                 return ItemActionResult.SUCCESS;
             }
-        } else if (stack.getItem() == Items.AIR) {
+        } else if (stack.getItem() == Items.AIR && !world.isClient) {
             BlockEntity entity = world.getBlockEntity(pos);
             if  (entity instanceof MonitorBlockEntity monitorEntity) {
                 camerapos = monitorEntity.getLinkedCamera();
                 cameraface = monitorEntity.getLinkedCameraDir();
+                center = monitorEntity.getMonitorCenter();
+                mh = monitorEntity.getHeight() - 1;
+                mw = monitorEntity.getWidth() - 1;
+                cameratype = monitorEntity.getCameratype();
             }
 
             if(camerapos!=null && cameraface!=null) {
@@ -117,15 +196,16 @@ public class MonitorBlock extends HorizontalFacingBlock implements BlockEntityPr
                     boolean portalActive = monitorEntity.isPortalActive(pos);
                     if(portalActive &&player.isSneaking()){
                         monitorEntity.closePortal(pos);
-                        world.setBlockState(pos, state.with(POWERED, false));
                         return ItemActionResult.SUCCESS;
                     }
                     if(!monitorEntity.isPortalActive(pos) && !player.isSneaking()) {
                     Portal portal = new Portal(Portal.ENTITY_TYPE, world);
                     portal.setDestDim(world.getRegistryKey());
-                    portal.setPortalSize(0.9, 0.8, 1);
-                    portal.setOriginPos(Vec3d.ofCenter(pos));
-                    portal.setDestination(Vec3d.ofCenter(camerapos));
+                    portal.setPortalSize(mw + 0.9, mh + 0.8, 1);
+                    portal.setOriginPos(center);
+                    dest = Vec3d.ofCenter(camerapos);
+                    dest = dest.add(Vec3d.of(cameraface.getVector()).multiply(0.5));
+                    portal.setDestination(dest);
                     portal.setInteractable(false);
                     portal.setTeleportable(false);
                     Direction face = state.get(FACING);
@@ -144,7 +224,7 @@ public class MonitorBlock extends HorizontalFacingBlock implements BlockEntityPr
 //                        case DOWN ->
 //                                portal.setOrientation(new Vec3d(1, 0, 0), new Vec3d(0, 0, 1)); // Facing down (Y-negative)
                     }
-                    Vec3d offset = Vec3d.ofCenter(pos).add(Vec3d.of(face.getVector()).multiply(0.501)); // Offset from block center
+                    Vec3d offset = center.add(Vec3d.of(face.getVector()).multiply(0.501)); // Offset from block center
                     portal.setOriginPos(offset);
                     switch (cameraface) {
                         case NORTH -> portal.setOtherSideOrientation(PortalManipulation.getPortalOrientationQuaternion(
@@ -162,7 +242,6 @@ public class MonitorBlock extends HorizontalFacingBlock implements BlockEntityPr
                     }
                     if (portal.isPortalValid()) {
                         portal.getWorld().spawnEntity(portal);
-                        world.setBlockState(pos, state.with(POWERED, true));
                     }
                         return ItemActionResult.SUCCESS;
                     }
@@ -178,6 +257,7 @@ public class MonitorBlock extends HorizontalFacingBlock implements BlockEntityPr
         BlockEntity entity = world.getBlockEntity(pos);
         if (entity instanceof MonitorBlockEntity monitorEntity) {
            monitorEntity.closePortal(pos);
+           monitorEntity.updateSize();
         }
         super.onStateReplaced(state, world, pos, newState, moved);
     }

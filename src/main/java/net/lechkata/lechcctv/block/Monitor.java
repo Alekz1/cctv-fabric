@@ -105,7 +105,7 @@ public class Monitor extends HorizontalFacingBlock implements BlockEntityProvide
             }
             return ItemActionResult.FAIL;
         }
-        if(stack.getItem()== Items.AIR){
+        if(stack.getItem()== Items.AIR && world.isClient){
             BlockEntity entity = world.getBlockEntity(pos);
             if  (entity instanceof MonitorBlockEntity monitorEntity) {
                 camerapos = monitorEntity.getLinkedCamera();
@@ -122,12 +122,13 @@ public class Monitor extends HorizontalFacingBlock implements BlockEntityProvide
                         return ItemActionResult.SUCCESS;
                     }
                     if(!monitorEntity.isPortalActive(pos) && !player.isSneaking()) {
-                        System.out.println("Creating Portal");
                         qouteall.imm_ptl.core.portal.Portal portal = new qouteall.imm_ptl.core.portal.Portal(Portal.ENTITY_TYPE, world);
                         portal.setDestDim(world.getRegistryKey());
                         portal.setPortalSize(0.65, 0.55, 1);
                         portal.setOriginPos(Vec3d.ofCenter(pos));
-                        portal.setDestination(Vec3d.ofCenter(camerapos));
+                        Vec3d dest = Vec3d.ofCenter(camerapos);
+                        dest = dest.add(Vec3d.of(cameraface.getVector()).multiply(0.5));
+                        portal.setDestination(dest);
                         portal.setInteractable(false);
                         portal.setTeleportable(false);
                         Direction face = state.get(FACING);
